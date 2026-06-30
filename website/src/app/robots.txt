@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /vault/dashboard
+Disallow: /api/
+
+Sitemap: https://nyxeltechnologies.com/sitemap.xml
