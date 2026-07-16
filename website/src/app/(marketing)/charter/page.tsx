@@ -1,42 +1,85 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Check, AlertTriangle, Loader2, ExternalLink } from 'lucide-react';
+import { Shield, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { CHARTER_PRINCIPLES } from '@/lib/constants';
-import { fetchAttestationStatus } from '@/services/eas';
+import { useAccount, useSignTypedData } from 'wagmi';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { 
+  prepareCharterAttestation, 
+  completeOffchainAttestation, 
+  verifyOffChainAttestation 
+} from '@/services/easOffChain';
 
 export default function CharterPage() {
-  const [status, setStatus] = useState<'idle' | 'verifying' | 'verified' | 'unverified' | 'error'>('idle');
+  const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  const { signTypedDataAsync } = useSignTypedData();
 
-  const ATTESTATION_UID = process.env.NEXT_PUBLIC_CHARTER_UID || '0x0000000000000000000000000000000000000000000000000000000000000000';
+  const [status, setStatus] = useState<'idle' | 'signing' | 'verified' | 'error'>('idle');
+  const [attestationJson, setAttestationJson] = useState<string | null>(null);
 
-  const handleVerify = async () => {
-    if (status === 'verifying') return;
-    setStatus('verifying');
-
-    try {
-      // Fallback/Mock mode for default zero-UID to demonstrate the successful UI transition state
-      if (ATTESTATION_UID === '0x0000000000000000000000000000000000000000000000000000000000000000') {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        setStatus('verified');
-      } else {
-        const { isValid } = await fetchAttestationStatus(ATTESTATION_UID);
+  // Load and verify saved off-chain attestation on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('nxc_charter_attestation');
+    if (saved) {
+      try {
+        const attestation = JSON.parse(saved);
+        const isValid = verifyOffChainAttestation(attestation);
         if (isValid) {
           setStatus('verified');
-        } else {
-          setStatus('unverified');
+          setAttestationJson(JSON.stringify(attestation, null, 2));
         }
+      } catch (e) {
+        console.error('Failed to verify saved off-chain attestation:', e);
+      }
+    }
+  }, []);
+
+  const handleSignAndVerify = async () => {
+    if (!isConnected) {
+      if (openConnectModal) {
+        openConnectModal();
+      }
+      return;
+    }
+
+    setStatus('signing');
+    try {
+      // 1. Prepare EIP-712 parameters
+      const prepared = prepareCharterAttestation(
+        "Sovereign IP, Zero Leak, Elite Assembly, Dynamic Sprint, Escrow Scale, Permanent Anonymity",
+        "Acknowledged & Immutably Signed",
+        address!
+      );
+
+      // 2. Sign typed data via connected wallet client
+      const signature = await signTypedDataAsync({
+        domain: prepared.domain,
+        types: prepared.types,
+        primaryType: 'Attest',
+        message: prepared.message,
+      });
+
+      // 3. Construct completed off-chain attestation
+      const attestation = completeOffchainAttestation(prepared, signature, address!);
+
+      // 4. Verify attestation cryptographically (strictly off-chain)
+      const isValid = verifyOffChainAttestation(attestation);
+
+      if (isValid) {
+        setStatus('verified');
+        const jsonStr = JSON.stringify(attestation, null, 2);
+        setAttestationJson(jsonStr);
+        localStorage.setItem('nxc_charter_attestation', jsonStr);
+      } else {
+        setStatus('error');
       }
     } catch (err) {
-      console.error('EAS verification error:', err);
+      console.error('Off-chain signing/verification error:', err);
       setStatus('error');
-    } finally {
-      // Delay redirection slightly so the user can see the success or failure badge feedback
-      setTimeout(() => {
-        window.open(`https://easscan.org/attestation/view/${ATTESTATION_UID}`, '_blank', 'noopener,noreferrer');
-      }, 1200);
     }
   };
 
@@ -106,53 +149,63 @@ export default function CharterPage() {
       {/* EAS Attestation Box */}
       <div className="border border-[#2A2A2A] bg-black/40 p-8 text-center max-w-3xl mx-auto space-y-6">
         <p className="text-sm text-[#888888]">
-          These principles are immutably attested on-chain via the Ethereum Attestation Service (EAS).
+          Sign these principles off-chain using your connected wallet. EAS Off-Chain signatures verify cryptographically without gas fees.
         </p>
         <div className="flex flex-col items-center justify-center gap-4">
-          <button
-            onClick={handleVerify}
-            disabled={status === 'verifying'}
-            className={`inline-flex items-center gap-2 px-6 py-3 border font-mono text-sm font-bold tracking-wider uppercase transition-all duration-300 ${
-              status === 'verified'
-                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-                : status === 'verifying'
-                ? 'bg-[#1A1A1A] border-[#2A2A2A] text-[#888888] cursor-wait'
-                : status === 'error'
-                ? 'bg-rose-500/10 border-rose-500 text-rose-400'
-                : status === 'unverified'
-                ? 'bg-amber-500/10 border-amber-500 text-amber-400'
-                : 'bg-transparent border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700]/10 hover:shadow-[0_0_15px_rgba(255,215,0,0.15)] cursor-pointer'
-            }`}
-          >
-            {status === 'verifying' && <Loader2 className="w-4 h-4 animate-spin" />}
-            {status === 'verified' && <Check className="w-4 h-4" />}
-            {(status === 'error' || status === 'unverified') && <AlertTriangle className="w-4 h-4" />}
-            <span>
-              {status === 'verifying' && 'Verifying...'}
-              {status === 'verified' && 'Attestation Verified'}
-              {status === 'error' && 'Verification Failed'}
-              {status === 'unverified' && 'Attestation Missing'}
-              {status === 'idle' && 'Verify EAS Attestation Link'}
-            </span>
-            {status !== 'verifying' && <ExternalLink className="w-4 h-4 ml-1 opacity-70" />}
-          </button>
+          {status !== 'verified' ? (
+            <button
+              onClick={handleSignAndVerify}
+              disabled={status === 'signing'}
+              className={`inline-flex items-center gap-2 px-6 py-3 border font-mono text-sm font-bold tracking-wider uppercase transition-all duration-300 ${
+                status === 'signing'
+                  ? 'bg-[#1A1A1A] border-[#2A2A2A] text-[#888888] cursor-wait'
+                  : 'bg-transparent border-[#FFD700] text-[#FFD700] hover:bg-[#FFD700]/10 hover:shadow-[0_0_15px_rgba(255,215,0,0.15)] cursor-pointer'
+              }`}
+            >
+              {status === 'signing' && <Loader2 className="w-4 h-4 animate-spin" />}
+              {!isConnected ? 'Connect Wallet to Sign' : status === 'signing' ? 'Signing...' : 'Sign Charter Off-Chain'}
+            </button>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+              <div className="inline-flex items-center gap-2 px-6 py-3 border bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] font-mono text-sm font-bold tracking-wider uppercase">
+                <Check className="w-4 h-4" />
+                <span>Attestation Verified</span>
+              </div>
+              <span className="text-[10px] text-emerald-400/80 font-mono uppercase tracking-widest animate-pulse">
+                ✓ Cryptographic signature valid (Base Network EIP-712)
+              </span>
+            </div>
+          )}
 
-          {status === 'verified' && (
-            <span className="text-[10px] text-emerald-400/80 font-mono uppercase tracking-widest animate-pulse">
-              ✓ On-chain status confirmed
-            </span>
-          )}
           {status === 'error' && (
-            <span className="text-[10px] text-rose-400/80 font-mono uppercase tracking-widest">
-              ⚠ Network error. Proceeding to Easscan.
-            </span>
-          )}
-          {status === 'unverified' && (
-            <span className="text-[10px] text-amber-400/80 font-mono uppercase tracking-widest">
-              ⚠ UID not registered. Proceeding to Easscan.
-            </span>
+            <div className="flex items-center gap-2 text-rose-400 text-xs mt-2">
+              <AlertTriangle className="w-4 h-4" />
+              <span>Attestation failed. Please check your wallet connection and try again.</span>
+            </div>
           )}
         </div>
+
+        {/* Display Off-Chain JSON payload if verified */}
+        {attestationJson && (
+          <div className="text-left mt-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-[#888888] font-bold uppercase tracking-wider">EAS Off-Chain Attestation Payload JSON</span>
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('nxc_charter_attestation');
+                  setAttestationJson(null);
+                  setStatus('idle');
+                }}
+                className="text-xs text-rose-400 hover:underline hover:text-rose-300 font-bold uppercase tracking-wider"
+              >
+                Clear Signature
+              </button>
+            </div>
+            <pre className="p-4 bg-[#121212] border border-[#2A2A2A] text-xs text-[#00F0FF] overflow-x-auto max-h-60 rounded-none font-mono scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-zinc-950">
+              <code>{attestationJson}</code>
+            </pre>
+          </div>
+        )}
       </div>
 
       {/* Closing Quote */}
