@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Clock, X, ArrowRight, Mail, Cpu, Database, Network } from 'lucide-react';
+import { Clock, X, ArrowRight, Mail, Cpu, Database, Network, Copy, Check } from 'lucide-react';
 import { useVaultSession } from '@/hooks/useVaultSession';
 import { Project } from '@/lib/projects';
 import { Card } from '@/components/ui/Card';
@@ -16,6 +16,15 @@ export default function VaultDashboardPage() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [dynamicProjects, setDynamicProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyReferral = () => {
+    if (session?.referralCode) {
+      navigator.clipboard.writeText(session.referralCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   // Fetch dynamic projects from Redis-backed API
   useEffect(() => {
@@ -84,6 +93,29 @@ export default function VaultDashboardPage() {
             <span className="text-[10px] sm:text-xs text-[#888888]">
               Identity: {session?.email || session?.address || 'Anonymous'}
             </span>
+
+            {session?.referralCode && (
+              <>
+                <span className="text-[#2A2A2A] font-bold">|</span>
+                <div className="flex items-center gap-2 text-[10px] sm:text-xs">
+                  <span className="text-[#888888]">Referral:</span>
+                  <code className="text-[#FFD700] font-mono bg-[#1A1A1A] px-2 py-0.5 border border-[#2A2A2A] rounded-none">
+                    {session.referralCode}
+                  </code>
+                  <button
+                    onClick={handleCopyReferral}
+                    className="hover:text-[#00F0FF] text-[#888888] transition-colors cursor-pointer flex items-center"
+                    title="Copy Code"
+                  >
+                    {copied ? (
+                      <span className="text-[9px] text-[#00F0FF] uppercase tracking-wider font-semibold">Copied!</span>
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-6">
@@ -125,8 +157,24 @@ export default function VaultDashboardPage() {
 
         {/* 5 Project Cards (Glass + Neo hybrid) */}
         {loadingProjects ? (
-          <div className="text-center py-20 text-[#888888] animate-pulse">
-            Loading blueprints...
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div 
+                key={i} 
+                className="h-[380px] w-full bg-[#121212] border border-[#2A2A2A] rounded-none animate-pulse flex flex-col justify-between p-8"
+              >
+                <div className="space-y-6">
+                  <div className="h-8 bg-[#1A1A1A] w-1/2 rounded-none" />
+                  <div className="h-6 bg-[#1A1A1A] w-1/3 rounded-none" />
+                  <div className="space-y-3 pt-4">
+                    <div className="h-4 bg-[#1A1A1A] w-full rounded-none" />
+                    <div className="h-4 bg-[#1A1A1A] w-5/6 rounded-none" />
+                    <div className="h-4 bg-[#1A1A1A] w-4/5 rounded-none" />
+                  </div>
+                </div>
+                <div className="h-10 bg-[#1A1A1A] w-full rounded-none mt-8" />
+              </div>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -240,7 +288,7 @@ export default function VaultDashboardPage() {
               <rect width="100%" height="100%" fill="url(#grid)" />
 
               {/* Elements & Connections */}
-              <g className="animate-pulse" style={{ animationDuration: '4s' }}>
+              <g className="animate-pulse">
                 {/* Node 1: Client Gateway */}
                 <rect x="30" y="110" width="80" height="50" rx="4" fill="#121212" stroke="#00F0FF" strokeWidth="1.5" />
                 <text x="70" y="140" fill="#00F0FF" fontSize="10" fontFamily="monospace" textAnchor="middle">Client Gate</text>

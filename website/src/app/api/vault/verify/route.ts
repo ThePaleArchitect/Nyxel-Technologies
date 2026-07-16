@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     if (inputHash !== storedHash) {
       const nextAttempts = attempts + 1;
-      
+
       if (nextAttempts >= 3) {
         // Lock out
         await redis.set(lockoutKey, '1', { ex: 3600 });
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
           hash: storedHash,
           attempts: nextAttempts
         }), { ex: 86400 });
-        
+
         logger.info({ email: emailTrimmed, attempts: nextAttempts }, 'Incorrect OTP code entered');
         return NextResponse.json(
           { error: `Incorrect passcode. ${3 - nextAttempts} attempts remaining.` },
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     // Success! Generate secure random session token
     const sessionToken = crypto.randomBytes(32).toString('hex');
-    
+
     // Determine tier based on email domain (non-corporate defaults to Personal, corporate can see Incubation/Scale depending on their request)
     // For simplicity, default to Incubation if corporate, otherwise Personal.
     const publicDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com'];
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const isCorp = !publicDomains.includes(domain);
     const tier = isCorp ? 'Incubation' : 'Personal';
 
-    const adminEmails = ['admin@nyxeltechnologies.com', 'relay@nyxeltechnologies.com'];
+    const adminEmails = ['paley@nyxeltechnologies.com', 'thepalearchitect@gmail.com'];
     const role = adminEmails.includes(emailTrimmed) ? 'admin' : 'client';
 
     const sessionData = {
@@ -104,7 +104,12 @@ export async function POST(req: NextRequest) {
     // Store session in Redis with 24 hours TTL
     const sessionKey = `session:${sessionToken}`;
     await redis.set(sessionKey, JSON.stringify(sessionData), { ex: 86400 });
-    
+
+    // Generate & Save Blind Hash (Requirement 6)
+    const internalSalt = process.env.INTERNAL_SECRET_SALT || 'default_internal_salt';
+    const blindHash = crypto.createHmac('sha256', internalSalt).update(emailTrimmed).digest('hex');
+    await redis.sadd('nxc:verified_identities', blindHash);
+
     // Delete OTP key
     await redis.del(otpKey);
 
@@ -112,7 +117,7 @@ export async function POST(req: NextRequest) {
 
     // Create response and set cookie
     const response = NextResponse.json({ success: true, redirect: '/vault/dashboard' });
-    
+
     // HTTP-only cookie setup (Security Rule 26 & 16.1)
     response.cookies.set({
       name: 'nx_vault_session',

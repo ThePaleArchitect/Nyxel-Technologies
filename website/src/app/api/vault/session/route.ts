@@ -30,6 +30,19 @@ export async function GET(req: NextRequest) {
       return response;
     }
 
+    const user_email_or_wallet = sessionData.email || sessionData.address || '';
+    if (user_email_or_wallet) {
+      const crypto = require('crypto');
+      const internalSalt = process.env.INTERNAL_SECRET_SALT || 'default_internal_salt';
+      const referralSalt = process.env.REFERRAL_SECRET_SALT || 'default_referral_salt';
+      
+      const blindHash = crypto.createHmac('sha256', internalSalt).update(user_email_or_wallet.toLowerCase()).digest('hex');
+      const referralCodeHash = crypto.createHmac('sha256', referralSalt).update(blindHash).digest('hex');
+      const referralCode = referralCodeHash.substring(0, 8);
+      
+      sessionData.referralCode = referralCode;
+    }
+
     return NextResponse.json({
       authenticated: true,
       session: sessionData

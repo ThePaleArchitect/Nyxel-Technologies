@@ -56,7 +56,7 @@ export const Header: React.FC = () => {
         <button 
           className="md:hidden text-[#888888] hover:text-[#EAEAEA] focus:outline-none"
           onClick={() => setIsOpen(!isOpen)}
-          aria-expanded={isOpen}
+          aria-expanded={isOpen ? 'true' : 'false'}
           aria-label="Toggle navigation menu"
         >
           {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

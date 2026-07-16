@@ -16,6 +16,17 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  webpack: (config: any) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      porto: false,
+      'porto/internal': false,
+      '@base-org/account': false,
+      '@metamask/connect-evm': false,
+      accounts: false,
+    };
+    return config;
+  },
 };
 
 export default nextConfig;

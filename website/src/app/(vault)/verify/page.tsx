@@ -15,7 +15,8 @@ export default function VerifyPage() {
   const { authenticated } = useVaultSession();
 
   const [otp, setOtp] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function VerifyPage() {
       return;
     }
 
-    setSubmitting(true);
+    setIsLoading(true);
     setErrorMsg('');
 
     try {
@@ -46,12 +47,16 @@ export default function VerifyPage() {
       if (!res.ok) {
         setErrorMsg(data.error || 'Verification failed. Try again.');
       } else {
+        setIsAuthorized(true);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('isAuthorized', 'true');
+        }
         router.push(data.redirect);
       }
     } catch (err) {
       setErrorMsg('Network error. Failed to verify passcode.');
     } finally {
-      setSubmitting(false);
+      setIsLoading(false);
     }
   };
 
@@ -91,11 +96,12 @@ export default function VerifyPage() {
             onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
             required
             id="verify-otp"
+            disabled={isLoading}
             className="text-center text-2xl tracking-[10px] placeholder:tracking-normal font-bold"
           />
 
-          <Button type="submit" variant="neo" className="w-full cursor-pointer" disabled={submitting}>
-            Verify Code & Enter Vault
+          <Button type="submit" variant="neo" className="w-full cursor-pointer" disabled={isLoading}>
+            {isLoading ? 'Verifying...' : 'Verify Code & Enter Vault'}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </form>

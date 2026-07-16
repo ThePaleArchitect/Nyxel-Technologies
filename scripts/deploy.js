@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 async function main() {
-  const usdcAddress = process.env.NEXT_PUBLIC_USDC_ADDRESS || "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+  const usdcAddress = process.env.NEXT_PUBLIC_USDC_ADDRESS || "0x88372c9c7Cf883A62eB3c46A79BC4b496AbCf822";
   const Escrow = await hre.ethers.getContractFactory("Escrow");
   const escrow = await Escrow.deploy(
     usdcAddress,

@@ -2124,6 +2124,51 @@ Next.js 15 React framework with App Router, Server Components, and async params.
 
 ---
 
+30. REFACTORING & WORKSPACE SPECIFICATIONS (V8.0)
+
+30.1 Website Structure Map
+
+· /                            → Main Landing Page
+· /charter                     → Core Principles + On-chain EAS Attestation Box
+· /network                     → Team Roster (with Glassmorphic Dossier Modals)
+· /capabilities                → Tier Comparisons (Personal, Incubation, Scale)
+· /docs/how-we-bill            → Complex Pricing Matrix
+· /vault                       → Login portal supporting side-by-side Manual Email/Google OAuth and Web3 SIWE Connect
+· /verify                      → OTP Verification page with uniform loading disabled controls
+· /vault/dashboard             → Case studies dashboard with sharp-cornered skeleton loader states, showing dynamic referral codes
+· /vault/admin                 → Admin control panel to manage dynamic leads, dynamic projects, and dynamic roster
+· /api/vault/request           → OTP Code generator & Resend dispatcher
+· /api/vault/verify            → Web2 OTP verifier & nx_vault_session cookie setter
+· /api/vault/session           → Retrieve active session details & dynamic referral codes
+· /api/vault/web3/nonce        → SIWE cryptographic nonce provider
+· /api/vault/web3/verify       → Web3 SIWE verifier & nx_vault_session cookie setter
+· /api/channel                 → Secure brief submission endpoint with dynamic referral checking
+· /api/auth/*                  → Auth.js v5 Google OAuth route handlers and callbacks
+· /api/admin/*                 → Protected administrative database REST endpoints
+
+30.2 Style & UI Guidelines
+
+· Colors: Page background must remain absolute #0A0A0A black. Primary accents are Cyan (#00F0FF), Neo-Orange (#FF4500), Gold (#FFD700), and Crimson (#FF1A1A).
+· Borders: Neo-Brutalist elements use 4px solid borders; standard elements use 1px solid #2A2A2A.
+· Corners: All UI forms, text areas, input fields, buttons, and loading skeletons must use sharp unpolished corners (rounded-none).
+· Loading Skeletons: While loading dynamic cards or data blocks, visual interfaces must render flat #121212 background grids with 1px solid #2A2A2A outlines, animating on the Tailwind animate-pulse loop. Pilled or rounded skeletons are strictly prohibited.
+· Glassmorphic Modals: Centered, full-viewport overlays must enforce backdrop-blur-[12px] with background transparency (e.g., bg-black/85 or bg-white/5).
+
+30.3 Routing Rules & Cookie Pipeline
+
+· Client Routing: Absolute ban on native browser page reloads (window.location.href). State transitions must use Next.js useRouter hooks or Client-side Router components.
+· Session Cookie: Authorized Web2 OTP, Google OAuth, and Web3 SIWE sessions must issue a signed, HTTP-Only cookie nx_vault_session with a 24-hour expiration lifetime.
+· Middleware: Edge middleware intercepts protected paths (/vault/dashboard and /vault/admin) using direct Redis checks on Vercel deployments, while supporting local development bypass.
+
+30.4 Immutable / Protected Regions (Never Modify)
+
+· Core Escrow Contract Logic: Do not touch Escrow milestone validation, arbiter release logic, or refund routines in contracts/Escrow.sol.
+· Security Headers: Never remove Content-Security-Policy or X-Frame-Options set in the response headers of website/src/middleware.ts.
+· Rate Limiting Key Formulas: Do not remove or weaken IP-based rate limiting of leads inside api/channel.
+· Cryptographic Signature Logic: Do not weaken SIWE signature validations or bypass nonces in api/vault/web3/verify.
+
+---
+
 END OF AGENTS.MD
 
 This document is the complete, authoritative specification for building nyxeltechnologies.com.

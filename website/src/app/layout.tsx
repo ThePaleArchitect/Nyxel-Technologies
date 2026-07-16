@@ -43,6 +43,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { Web3Provider } from "@/components/providers/Web3Provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -51,7 +53,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${jetbrains.variable}`}>
       <body className="antialiased">
-        {children}
+        <Web3Provider>
+          {children}
+        </Web3Provider>
       </body>
     </html>
   );

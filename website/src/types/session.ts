@@ -5,4 +5,5 @@ export interface VaultSession {
   expiresAt: number;
   tier: 'Personal' | 'Incubation' | 'Scale';
   role?: 'admin' | 'client';
+  referralCode?: string;
 }

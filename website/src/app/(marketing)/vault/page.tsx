@@ -2,17 +2,22 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, Mail, Wallet, Shield, AlertTriangle } from 'lucide-react';
+import { Lock, Shield, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Tabs } from '@/components/ui/Tabs';
 import { isCorporateEmail } from '@/lib/utils';
+import { signIn } from 'next-auth/react';
+import { Web3Connect } from '@/components/vault/Web3Connect';
 
 export default function VaultPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('web2');
+
+  // Unified Loading State (uniform reactive boolean for form disabling)
+  const [isLoading, setIsLoading] = useState(false);
 
   // Web2 Form States
   const [fullName, setFullName] = useState('');
@@ -21,13 +26,7 @@ export default function VaultPage() {
   const [role, setRole] = useState('Solo Builder');
   const [challenge, setChallenge] = useState('');
   const [agreed, setAgreed] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  // Web3 States
-  const [walletConnected, setWalletConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState('');
-  const [siweSigning, setSiweSigning] = useState(false);
 
   const roles = [
     'Solo Builder',
@@ -52,7 +51,7 @@ export default function VaultPage() {
       return;
     }
 
-    setSubmitting(true);
+    setIsLoading(true);
     setErrorMsg('');
 
     try {
@@ -73,59 +72,12 @@ export default function VaultPage() {
       if (!res.ok) {
         setErrorMsg(data.error || 'Request failed. Please try again.');
       } else {
-        // Redirect to OTP verification page with email as query parameter
         router.push(`/verify?email=${encodeURIComponent(email)}`);
       }
     } catch (err) {
       setErrorMsg('Network error. Failed to send passcode.');
     } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleConnectWallet = () => {
-    // Mock connecting wallet address
-    setWalletConnected(true);
-    setWalletAddress('0x3fd2...c8a4');
-  };
-
-  const handleWeb3SignAndEnter = async () => {
-    setSiweSigning(true);
-    setErrorMsg('');
-
-    try {
-      // 1. Get nonce from server
-      const nonceRes = await fetch('/api/vault/web3/nonce');
-      const { nonce } = await nonceRes.json();
-
-      // 2. Form SIWE Message
-      const address = '0x3fd29949d012c8a41108f4c7c32d4f71b54bda02';
-      const message = `nyxeltechnologies.com wants you to sign in with your Ethereum account:\n${address}\n\nURI: https://nyxeltechnologies.com\nVersion: 1\nChain ID: 1\nNonce: ${nonce}\nIssued At: ${new Date().toISOString()}`;
-
-      // 3. Mock signature validation (since we don't have MetaMask in automated script)
-      // Standard signature format
-      const mockSignature = '0x21f8a9e01234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456781b';
-
-      const verifyRes = await fetch('/api/vault/web3/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          signature: mockSignature,
-          address,
-        }),
-      });
-
-      const verifyData = await verifyRes.json();
-      if (verifyRes.ok && verifyData.success) {
-        router.push(verifyData.redirect);
-      } else {
-        setErrorMsg(verifyData.error || 'SIWE Signature verification failed.');
-      }
-    } catch (err) {
-      setErrorMsg('Failed to sign SIWE message.');
-    } finally {
-      setSiweSigning(false);
+      setIsLoading(false);
     }
   };
 
@@ -200,6 +152,38 @@ export default function VaultPage() {
               {activeTab === 'web2' ? (
                 /* WEB2 FORM */
                 <form onSubmit={handleWeb2Submit} className="space-y-6">
+                  {/* Google OAuth & Manual Email Intake side-by-side */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end border border-[#2A2A2A]/50 bg-[#121212]/50 p-4">
+                    <Input
+                      label="Corporate Email Address"
+                      type="email"
+                      placeholder="jane@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      id="web2-email"
+                      disabled={isLoading}
+                    />
+
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] text-[#888888] uppercase tracking-wider font-mono">Alternative Entry</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsLoading(true);
+                          signIn('google');
+                        }}
+                        disabled={isLoading}
+                        className="w-full bg-[#1A1A1A] text-[#EAEAEA] border border-[#2A2A2A] rounded-none py-3 px-4 font-mono text-xs hover:bg-[#2A2A2A]/50 transition-colors flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-4 h-4 fill-current text-[#EAEAEA]" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.535 0-6.4-2.865-6.4-6.4s2.865-6.4 6.4-6.4c1.77 0 3.3.722 4.412 1.889l3.243-3.243C19.64 2.457 16.18 1 12.24 1 6.033 1 1 6.033 1 12.24s5.033 11.24 11.24 11.24c5.877 0 10.87-4.258 10.87-11.24 0-.64-.06-1.28-.18-1.955H12.24z"/>
+                        </svg>
+                        Sign in with Google
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <Input
                       label="Full Name"
@@ -209,19 +193,8 @@ export default function VaultPage() {
                       onChange={(e) => setFullName(e.target.value)}
                       required
                       id="web2-name"
+                      disabled={isLoading}
                     />
-                    <Input
-                      label="Corporate Email"
-                      type="email"
-                      placeholder="jane@company.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      id="web2-email"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <Input
                       label="Company Name"
                       type="text"
@@ -230,14 +203,19 @@ export default function VaultPage() {
                       onChange={(e) => setCompanyName(e.target.value)}
                       required
                       id="web2-company"
+                      disabled={isLoading}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6">
                     <div className="flex flex-col gap-2 font-mono">
                       <label htmlFor="web2-role" className="text-xs text-[#888888] uppercase tracking-wider">Role</label>
                       <select
                         id="web2-role"
-                        className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-none px-4 py-3 font-mono text-[#EAEAEA] focus:outline-none focus:border-[#00F0FF] focus:ring-2 focus:ring-[#00F0FF]/20"
+                        className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-none px-4 py-3 font-mono text-sm text-[#EAEAEA] focus:outline-none focus:border-[#00F0FF] focus:ring-2 focus:ring-[#00F0FF]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         value={role}
                         onChange={(e) => setRole(e.target.value)}
+                        disabled={isLoading}
                       >
                         {roles.map((r) => (
                           <option key={r} value={r}>
@@ -254,6 +232,7 @@ export default function VaultPage() {
                     value={challenge}
                     onChange={(e) => setChallenge(e.target.value)}
                     id="web2-challenge"
+                    disabled={isLoading}
                   />
 
                   <div className="flex items-start gap-3">
@@ -262,20 +241,21 @@ export default function VaultPage() {
                       id="web2-agree"
                       checked={agreed}
                       onChange={(e) => setAgreed(e.target.checked)}
-                      className="mt-1 cursor-pointer border-[#2A2A2A] bg-[#1A1A1A] focus:ring-[#00F0FF] accent-[#00F0FF]"
+                      disabled={isLoading}
+                      className="mt-1 cursor-pointer border-[#2A2A2A] bg-[#1A1A1A] focus:ring-[#00F0FF] accent-[#00F0FF] disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <label htmlFor="web2-agree" className="text-xs text-[#888888] leading-relaxed cursor-pointer select-none">
                       I confirm I have authority to request architecture specs for this domain. I understand all data is processed strictly under our privacy guarantees.
                     </label>
                   </div>
 
-                  <Button type="submit" variant="neo" className="w-full cursor-pointer" disabled={submitting}>
+                  <Button type="submit" variant="neo" className="w-full cursor-pointer" disabled={isLoading}>
                     <Lock className="w-4 h-4 mr-2" />
-                    {submitting ? 'Transmitting Code...' : 'Request Vault Access'}
+                    {isLoading ? 'Transmitting Code...' : 'Request Vault Access'}
                   </Button>
                 </form>
               ) : (
-                /* WEB3 CONNECT */
+                /* WEB3 CONNECT (Refactored using Web3Connect with SIWE flow) */
                 <div className="text-center py-8 space-y-8">
                   <div className="max-w-md mx-auto space-y-4">
                     <p className="text-sm text-[#888888] leading-relaxed">
@@ -283,23 +263,11 @@ export default function VaultPage() {
                     </p>
                   </div>
 
-                  {!walletConnected ? (
-                    <Button variant="neo" onClick={handleConnectWallet} className="cursor-pointer">
-                      <Wallet className="w-4 h-4 mr-2" />
-                      Connect Wallet
-                    </Button>
-                  ) : (
-                    <div className="space-y-6">
-                      <div className="bg-[#1A1A1A] border border-[#2A2A2A] p-4 text-sm max-w-sm mx-auto">
-                        <span className="text-[#888888] mr-2">Connected:</span>
-                        <strong className="text-[#00F0FF] font-mono">{walletAddress}</strong>
-                      </div>
-                      <Button variant="neo" onClick={handleWeb3SignAndEnter} className="cursor-pointer" disabled={siweSigning}>
-                        <Lock className="w-4 h-4 mr-2" />
-                        {siweSigning ? 'Verifying Signature...' : 'Sign Message & Enter Vault'}
-                      </Button>
-                    </div>
-                  )}
+                  <Web3Connect 
+                    onError={setErrorMsg} 
+                    isLoading={isLoading} 
+                    setIsLoading={setIsLoading} 
+                  />
                 </div>
               )}
             </div>

@@ -609,12 +609,14 @@ export default function AdminPage() {
                                 <button 
                                   onClick={() => editRoster(member)}
                                   className="p-1 border border-[#2A2A2A] hover:border-[#00F0FF] hover:text-[#00F0FF]"
+                                  title="Edit Roster Member"
                                 >
                                   <Edit3 className="w-3.5 h-3.5" />
                                 </button>
                                 <button 
                                   onClick={() => deleteRoster(member.handle)}
                                   className="p-1 border border-[#2A2A2A] hover:border-red-500 hover:text-red-500"
+                                  title="Delete Roster Member"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>

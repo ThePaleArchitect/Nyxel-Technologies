@@ -74,6 +74,11 @@ export async function POST(req: NextRequest) {
     const sessionKey = `session:${sessionToken}`;
     await redis.set(sessionKey, JSON.stringify(sessionData), { ex: 86400 });
 
+    // Generate & Save Blind Hash (Requirement 6)
+    const internalSalt = process.env.INTERNAL_SECRET_SALT || 'default_internal_salt';
+    const blindHash = crypto.createHmac('sha256', internalSalt).update(address.toLowerCase()).digest('hex');
+    await redis.sadd('nxc:verified_identities', blindHash);
+
     logger.info({ address: address.toLowerCase(), tier: 'Scale' }, 'Web3 SIWE Session established');
 
     // Create response & set HTTP-only cookie

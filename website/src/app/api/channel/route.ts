@@ -36,6 +36,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Cryptographic Referral Verification via Blind Hashes (Requirement 6)
+    let isVerifiedReferral = false;
+    if (data.referralCode) {
+      const verifiedIdentities = await redis.smembers('nxc:verified_identities');
+      const crypto = require('crypto');
+      const referralSalt = process.env.REFERRAL_SECRET_SALT || 'default_referral_salt';
+
+      for (const storedBlindHash of verifiedIdentities) {
+        const checkCodeHash = crypto.createHmac('sha256', referralSalt).update(storedBlindHash).digest('hex');
+        const checkCode = checkCodeHash.substring(0, 8);
+        if (checkCode === data.referralCode) {
+          isVerifiedReferral = true;
+          break;
+        }
+      }
+
+      if (!isVerifiedReferral) {
+        logger.warn({ referralCode: data.referralCode }, 'Invalid referral code submitted');
+        return NextResponse.json(
+          { error: 'Invalid referral code. Please check and try again.' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Forward to Slack / Discord webhook if configured
     const webhookUrl = process.env.SLACK_WEBHOOK_URL;
     const slackPayload = {
@@ -50,6 +75,7 @@ export async function POST(req: NextRequest) {
             { title: 'Role', value: data.role, short: true },
             { title: 'Tier Requested', value: data.tier, short: true },
             { title: 'Referral Code', value: data.referralCode || 'None', short: true },
+            { title: 'Network Status', value: isVerifiedReferral ? '✦ Verified Network Referral ✦' : 'Standard Inquiry', short: true },
             { title: 'NDA Status', value: data.ndaReady ? 'NDA Pre-Ready Signed' : 'Not Ready', short: true },
             { title: 'Technical Brief', value: data.technicalBrief, short: false },
           ],

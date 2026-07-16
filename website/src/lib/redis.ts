@@ -50,6 +50,20 @@ class InMemoryRedisFallback {
     await this.set(key, next.toString());
     return next;
   }
+
+  async sadd(key: string, member: string): Promise<number> {
+    const current = await this.get(key);
+    const set = Array.isArray(current) ? new Set<string>(current) : new Set<string>();
+    const existed = set.has(member);
+    set.add(member);
+    await this.set(key, Array.from(set));
+    return existed ? 0 : 1;
+  }
+
+  async smembers(key: string): Promise<string[]> {
+    const current = await this.get(key);
+    return Array.isArray(current) ? current : [];
+  }
 }
 
 if (url && token && !url.includes('your-cluster')) {
