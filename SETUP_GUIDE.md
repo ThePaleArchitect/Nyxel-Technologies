@@ -1,6 +1,6 @@
-# Nyxel Technologies (NXC) - Complete Setup & Customization Guide
+# Null Execution Collective (NXC) - Complete Setup & Customization Guide
 
-This document provides a comprehensive developer runbook for configuring, deploying, and customizing the **Nyxel Technologies (NXC)** website and the Web3 Escrow smart contracts. 
+This document provides a comprehensive developer runbook for configuring, deploying, and customizing the **Null Execution Collective (NXC)** website and the Web3 Escrow smart contracts. 
 
 ---
 
@@ -105,7 +105,7 @@ NEXT_PUBLIC_USDC_ADDRESS=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
 
 ## 4. Smart Contract Compilation & Deploying
 
-Nyxel Technologies features an on-chain milestone Escrow contract for the **Scale ($18,000+)** Web3 tier. The contract is in [contracts/Escrow.sol](file:///c:/Users/dell/OneDrive/Documents/Nyxel%20Technologies/contracts/Escrow.sol) and uses **Hardhat** for development.
+Null Execution Collective features an on-chain milestone Escrow contract for the **Scale ($18,000+)** Web3 tier. The contract is in [contracts/Escrow.sol](file:///c:/Users/dell/OneDrive/Documents/Nyxel%20Technologies/contracts/Escrow.sol) and uses **Hardhat** for development.
 
 ### 4.1 Deployment Configuration
 

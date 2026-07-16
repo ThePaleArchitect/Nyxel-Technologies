@@ -1,4 +1,4 @@
-AGENTS.md — Nyxel Technologies (NXC ✦)
+AGENTS.md — Null Execution Collective (NXC ✦)
 
 Version: 7.0 (Complete Production Specification)
 Last Updated: 2026-06-29
@@ -447,8 +447,13 @@ BarChart BarChart StratOps pillar
     </div>
   </div>
   <div className="mt-8 pt-8 border-t border-[#2A2A2A] text-center text-xs text-[#666666]">
-    <p>Built in stealth. Deployed in scale.</p>
-    <p className="mt-1">Nyxel Technologies is not affiliated with OmniVision Technologies or its Nyxel® sensor product.</p>
+    <p>Built in stealth. Deployed in scale. Null Execution Collective.</p>
+    <p className="mt-1">
+      Null Execution Collective (formerly Nyxel Technologies). Read our{' '}
+      <Link href="/docs/brand-transition" className="text-[#00F0FF] hover:underline">
+        Brand Transition & Domain Notice
+      </Link>.
+    </p>
   </div>
 </footer>
 ```
@@ -735,7 +740,7 @@ $ whoami
 > Unknown
 
 $ pwd
-> /nyxeltechnologies/404
+> /nullexecution/404
 
 $ cat page_not_found.md
 > 404 — Classified information not found.
@@ -1731,7 +1736,7 @@ export const metadata = {
 {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "Nyxel Technologies",
+  "name": "Null Execution Collective",
   "url": "https://nyxeltechnologies.com",
   "logo": "https://nyxeltechnologies.com/images/og-image.png",
   "description": "Faceless engineering studio. Stealth development. Web2 + Web3.",

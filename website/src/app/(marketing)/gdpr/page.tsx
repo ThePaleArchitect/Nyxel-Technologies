@@ -27,7 +27,7 @@ export default function GDPRPage() {
         GDPR Data Deletion
       </h1>
       <p className="text-sm text-[#888888] mb-12">
-        Nyxel Technologies Collective stores no persistent personal logs. In strict compliance with GDPR Article 17, you may verify and request purging of any active session variables or OTP logs matching your email.
+        Null Execution Collective stores no persistent personal logs. In strict compliance with GDPR Article 17, you may verify and request purging of any active session variables or OTP logs matching your email.
       </p>
 
       {submitted ? (

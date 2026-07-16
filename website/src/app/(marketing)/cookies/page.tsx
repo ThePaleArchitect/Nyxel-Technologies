@@ -14,7 +14,7 @@ export default function CookiesPage() {
             1. Cookie Usage Philosophy
           </h2>
           <p>
-            We respect client privacy. Nyxel Technologies Collective does not utilize marketing, advertising, analytics, or third-party cookies.
+            We respect client privacy. Null Execution Collective does not utilize marketing, advertising, analytics, or third-party cookies.
           </p>
         </section>
 

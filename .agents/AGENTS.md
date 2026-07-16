@@ -15,3 +15,6 @@
 
 ## 4. Agent Tool Constraints
 *   **Artifact Metadata:** Only supply the `ArtifactMetadata` property when calling creation or modification tools (`write_to_file`, `replace_file_content`, `multi_replace_file_content`) if the target file is located within the artifacts directory `<appDataDir>\brain\<conversation-id>`.
+
+## 5. Locating User-Uploaded Attachments
+*   **User Media Files:** When a user references an uploaded file or image in their prompt (e.g., "use this image" or "change logo to this") and it is not found in the workspace or git changes, immediately list the conversation's brain/artifact directory (`C:\Users\dell\.gemini\antigravity-ide\brain\<conversation-id>`) to check for auto-saved media files matching `media__<timestamp>.<ext>`.

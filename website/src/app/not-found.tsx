@@ -31,7 +31,7 @@ export default function NotFound() {
 
           <div className="space-y-1">
             <div className="text-[#888888]">$ pwd</div>
-            <div className="text-[#EAEAEA]">&gt; /nyxeltechnologies/404</div>
+            <div className="text-[#EAEAEA]">&gt; /nullexecution/404</div>
           </div>
 
           <div className="space-y-1">

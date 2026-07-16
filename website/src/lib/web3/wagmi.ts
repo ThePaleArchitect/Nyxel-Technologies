@@ -8,7 +8,7 @@ if (!projectId) {
 }
 
 export const config = getDefaultConfig({
-  appName: 'Nyxel Technologies',
+  appName: 'Null Execution Collective',
   projectId: projectId,
   chains: [mainnet, base, arbitrum],
   ssr: true,

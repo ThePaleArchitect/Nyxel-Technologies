@@ -1,4 +1,4 @@
-# Nyxel Technologies (NXC) - Production TODO List
+# Null Execution Collective (NXC) - Production TODO List
 
 This checklist tracks tasks and verification parameters needed before pushing the workspace refactoring to a live production environment.
 

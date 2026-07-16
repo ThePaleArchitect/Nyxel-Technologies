@@ -14,7 +14,7 @@ export default function PrivacyPage() {
             1. Zero-Data Retention Mission
           </h2>
           <p>
-            We do not store, mine, sell, or share your data. Nyxel Technologies Collective operates on an absolute stealth and anonymous engineering paradigm. We do not use persistent tracking databases for visitor activities.
+            We do not store, mine, sell, or share your data. Null Execution Collective operates on an absolute stealth and anonymous engineering paradigm. We do not use persistent tracking databases for visitor activities.
           </p>
         </section>
 
