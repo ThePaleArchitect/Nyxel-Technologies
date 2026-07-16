@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Lock, Menu, X } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -22,8 +23,15 @@ export const Header: React.FC = () => {
     <nav className="sticky top-0 z-50 bg-black/85 backdrop-blur-[12px] border-b border-white/5 px-6 py-4">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="font-mono text-[#00F0FF] text-xl font-bold tracking-tight hover:opacity-80 transition-opacity">
-          NXC ✦
+        <Link href="/" className="flex items-center gap-2 font-mono text-[#00F0FF] text-xl font-bold tracking-tight hover:opacity-80 transition-opacity">
+          <Image 
+            src="/logo.png" 
+            alt="NXC Logo" 
+            width={28} 
+            height={28} 
+            className="w-7 h-7 object-contain"
+          />
+          <span>NXC ✦</span>
         </Link>
 
         {/* Desktop Navigation */}

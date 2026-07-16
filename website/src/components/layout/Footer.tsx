@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Github, Twitter, Linkedin } from 'lucide-react';
 
 export const Footer: React.FC = () => {
@@ -7,7 +8,16 @@ export const Footer: React.FC = () => {
     <footer className="bg-[#0A0A0A] border-t border-[#2A2A2A] py-12 px-6 font-mono text-[#888888] text-sm">
       <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
         <div>
-          <div className="text-[#00F0FF] font-bold mb-2">NXC ✦</div>
+          <div className="flex items-center gap-2 text-[#00F0FF] font-bold mb-2">
+            <Image 
+              src="/logo.png" 
+              alt="NXC Logo" 
+              width={24} 
+              height={24} 
+              className="w-6 h-6 object-contain"
+            />
+            <span>NXC ✦</span>
+          </div>
           <p className="text-xs">© 2026 · Anonymous Engineering Collective</p>
         </div>
         <div>
